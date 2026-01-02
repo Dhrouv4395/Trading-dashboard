@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Portfolio Manager</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 50px;
+    padding-top: 30px;
+}
+
+.header h1 {
+    font-size: 3em;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.header p {
+    font-size: 1.2em;
+    opacity: 0.9;
+}
+
+.portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.portfolio-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.portfolio-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+.portfolio-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.portfolio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.portfolio-name {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.portfolio-icon {
+    font-size: 2em;
+}
+
+.portfolio-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.stat-item {
+    background: #f3f4f6;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.stat-label {
+    font-size: 0.85em;
+    color: #6b7280;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 1.3em;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.positive {
+    color: #10b981 !important;
+}
+
+.negative {
+    color: #ef4444 !important;
+}
+
+.add-portfolio-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 3px dashed rgba(255, 255, 255, 0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.add-portfolio-card:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.8);
+    transform: translateY(-10px);
+}
+
+.add-icon {
+    font-size: 4em;
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+.add-text {
+    font-size: 1.3em;
+    color: #fff;
+    font-weight: 600;
+}
+
+.delete-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0;
+    z-index: 10;
+}
+
+.portfolio-card:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 40px;
+    border-radius: 20px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content h2 {
+    margin-bottom: 25px;
+    color: #1f2937;
+    font-size: 2em;
+}
+
+.modal-content input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 1.1em;
+    margin-bottom: 25px;
+    transition: border-color 0.3s;
+}
+
+.modal-content input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.modal-buttons button {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-create {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+}
+
+.btn-create:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-cancel {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+.btn-cancel:hover {
+    background: #d1d5db;
+}
+
+.empty-state {
+    text-align: center;
+    color: #fff;
+    padding: 100px 20px;
+}
+
+.empty-state h2 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+}
+
+.empty-state p {
+    font-size: 1.3em;
+    opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 2em;
+    }
+    
+    .portfolio-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>📊 Portfolio Manager</h1>
+        <p>Manage multiple stock portfolios in one place</p>
+    </div>
+
+    <div class="portfolio-grid" id="portfolioGrid"></div>
+</div>
+
+<!-- Modal for creating new portfolio -->
+<div class="modal" id="createModal">
+    <div class="modal-content">
+        <h2>Create New Portfolio</h2>
+        <input 
+            type="text" 
+            id="portfolioNameInput" 
+            placeholder="Enter portfolio name..."
+            maxlength="30"
+        >
+        <input 
+            type="password" 
+            id="portfolioPinInput" 
+            placeholder="Enter 4-digit PIN"
+            maxlength="4"
+            inputmode="numeric"
+        >
+
+        <div class="modal-buttons">
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-create" onclick="createPortfolio()">Create</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const PORTFOLIOS_KEY = "portfolios_list";
+
+// Initialize portfolios
+let portfolios = JSON.parse(localStorage.getItem(PORTFOLIOS_KEY) || "[]");
+portfolios = portfolios.filter(p => p.pin && /^\d{4}$/.test(p.pin));
+localStorage.setItem(PORTFOLIOS_KEY, JSON.stringify(portfolios));
+
+function render() {
+    const grid = document.getElementById('portfolioGrid');
+    
+    if (portfolios.length === 0) {
+    grid.innerHTML = `
+        <div class="empty-state">
+            <h2>No Portfolios Yet</h2>
+            <p>Create your first portfolio to get started</p>
+        </div>
+
+        <div class="portfolio-card add-portfolio-card" onclick="showCreateModal()">
+            <div class="add-icon">+</div>
+            <div class="add-text">Create New Portfolio</div>
+        </div>
+    `;
+}
+ else {
+        grid.innerHTML = portfolios.map(p => {
+            const stats = getPortfolioStats(p.id);
+            
+            return `
+                <div class="portfolio-card" onclick="openPortfolio('${p.id}')">
+                    <button class="delete-btn" onclick="deletePortfolio(event, '${p.id}')">×</button>
+                    <div class="portfolio-header">
+                        <div class="portfolio-name">${p.name}</div>
+                        <div class="portfolio-icon">💼</div>
+                    </div>
+                    <div class="portfolio-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Total Trades</div>
+                            <div class="stat-value">${stats.totalTrades}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Active</div>
+                            <div class="stat-value">${stats.activePositions}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Total P&L</div>
+                            <div class="stat-value ${stats.totalPL >= 0 ? 'positive' : 'negative'}">
+                                ₹${stats.totalPL.toFixed(2)}
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Win Rate</div>
+                            <div class="stat-value">${stats.winRate}%</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('') + `
+            <div class="portfolio-card add-portfolio-card" onclick="showCreateModal()">
+                <div class="add-icon">+</div>
+                <div class="add-text">Create New Portfolio</div>
+            </div>
+        `;
+    }
+}
+
+function getPortfolioStats(portfolioId) {
+    const stocks = JSON.parse(localStorage.getItem(`portfolio_data_${portfolioId}`) || "[]");
+    
+    const totalTrades = stocks.length;
+    const activePositions = stocks.filter(s => !s.myExitPrice).length;
+    
+    const closed = stocks.filter(s => s.myExitPrice && s.myExitPrice > 0);
+    const totalPL = closed.reduce((sum, s) => {
+        return sum + ((s.myExitPrice - s.myEntryPrice) * s.quantity);
+    }, 0);
+    
+    const wins = closed.filter(s => (s.myExitPrice - s.myEntryPrice) > 0);
+    const winRate = closed.length ? ((wins.length / closed.length) * 100).toFixed(1) : 0;
+    
+    return {
+        totalTrades,
+        activePositions,
+        totalPL,
+        winRate
+    };
+}
+
+function openPortfolio(portfolioId) {
+    const portfolio = portfolios.find(p => p.id === portfolioId);
+    const enteredPin = prompt(`Enter 4-digit PIN for "${portfolio.name}"`);
+
+    if (enteredPin !== portfolio.pin) {
+        alert("Incorrect PIN");
+        return;
+    }
+
+    localStorage.setItem('current_portfolio_id', portfolioId);
+    window.location.href = `2ndpage.html?portfolio=${portfolioId}`;
+}
+
+
+function showCreateModal() {
+    document.getElementById('createModal').classList.add('active');
+    document.getElementById('portfolioNameInput').value = '';
+    document.getElementById('portfolioNameInput').focus();
+}
+
+function closeModal() {
+    document.getElementById('createModal').classList.remove('active');
+}
+
+function createPortfolio() {
+    const name = document.getElementById('portfolioNameInput').value.trim();
+    const pin  = document.getElementById('portfolioPinInput').value.trim();
+
+    if (!name) {
+        alert('Please enter a portfolio name');
+        return;
+    }
+
+    if (!/^\d{4}$/.test(pin)) {
+        alert('PIN must be exactly 4 digits');
+        return;
+    }
+
+    if (portfolios.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+        alert('A portfolio with this name already exists');
+        return;
+    }
+
+    const newPortfolio = {
+        id: name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now(),
+        name,
+        pin,
+        createdAt: new Date().toISOString()
+    };
+
+    portfolios.push(newPortfolio);
+    localStorage.setItem(PORTFOLIOS_KEY, JSON.stringify(portfolios));
+    localStorage.setItem(`portfolio_data_${newPortfolio.id}`, "[]");
+
+    closeModal();
+    render();
+}
+
+
+function deletePortfolio(event, portfolioId) {
+    event.stopPropagation();
+
+    const portfolio = portfolios.find(p => p.id === portfolioId);
+    const enteredPin = prompt(`Enter PIN to delete "${portfolio.name}"`);
+
+    if (enteredPin !== portfolio.pin) {
+        alert("Incorrect PIN");
+        return;
+    }
+
+    if (!confirm(`Delete "${portfolio.name}" permanently?`)) return;
+
+    portfolios = portfolios.filter(p => p.id !== portfolioId);
+    localStorage.setItem(PORTFOLIOS_KEY, JSON.stringify(portfolios));
+    localStorage.removeItem(`portfolio_data_${portfolioId}`);
+
+    render();
+}
+
+
+function goToSecondPage() {
+    window.location.href = `2ndpage.html?portfolio=${portfolioId}`;
+}
+
+// Allow Enter key to create portfolio
+document.getElementById('portfolioNameInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        createPortfolio();
+    }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
+});
+
+// Close modal when clicking outside
+document.getElementById('createModal').addEventListener('click', (e) => {
+    if (e.target.id === 'createModal') {
+        closeModal();
+    }
+});
+
+// Initial render
+render();
+</script>
+
+</body>
+</html>

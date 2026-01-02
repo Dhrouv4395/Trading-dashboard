@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Portfolio Visual Analysis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 20px;
+    color: #fff;
+    min-height: 100vh;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-item .label {
+    font-size: 0.9em;
+    opacity: 0.8;
+    margin-bottom: 5px;
+}
+
+.stat-item .value {
+    font-size: 1.8em;
+    font-weight: 700;
+}
+
+.positive { color: #10b981; }
+.negative { color: #ef4444; }
+
+h2 {
+    margin-bottom: 15px;
+    font-size: 1.3em;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.card {
+    background: rgba(17, 24, 39, 0.95);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+canvas {
+    max-height: 350px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+button, .back-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #10b981;
+    color: #fff;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+button:hover, .back-btn:hover {
+    background: #059669;
+    transform: translateY(-2px);
+}
+
+.back-btn {
+    background: #6366f1;
+}
+
+.back-btn:hover {
+    background: #4f46e5;
+}
+
+.home-btn {
+    background: #8b5cf6;
+}
+
+.home-btn:hover {
+    background: #7c3aed;
+}
+
+.no-data {
+    text-align: center;
+    padding: 100px 20px;
+}
+
+.no-data h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+.no-data p {
+    font-size: 1.2em;
+    opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-bar {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1 id="portfolioTitle">📊 Portfolio Visual Analysis</h1>
+    
+    <div class="button-group">
+        <a href="index.html" class="back-btn home-btn">🏠 Home</a>
+        <button class="back-btn" onclick=" goToSecondPage()">⬅ Back to Dashboard</button>
+        <button onclick="refreshData()">🔄 Refresh Data</button>
+    </div>
+    
+    <div class="stats-bar" id="statsBar"></div>
+</div>
+
+<div id="noDataMessage" class="no-data" style="display:none">
+    <h2>📭 No Trading Data Available</h2>
+    <p>Add and close some trades in the dashboard to see visualizations here.</p>
+    <button onclick=" goToSecondPage()" style="margin-top:20px">Go to Dashboard</button>
+</div>
+
+<div class="grid" id="chartsGrid">
+
+<div class="card">
+    <h2>📈 Equity Curve</h2>
+    <canvas id="equityChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>📉 Drawdown Curve</h2>
+    <canvas id="drawdownChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>🔄 Rolling Win Rate (Last 10 Trades)</h2>
+    <canvas id="rollingWinChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>🏆 Win vs Loss Distribution</h2>
+    <canvas id="winLossChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>📅 Monthly P&L</h2>
+    <canvas id="monthlyChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>🧠 Performance by Advisor</h2>
+    <canvas id="sourceChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>⏱ Trade Duration vs P&L</h2>
+    <canvas id="durationChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>💼 Current Capital Allocation</h2>
+    <canvas id="allocationChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>📊 Profit Distribution</h2>
+    <canvas id="profitDistChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>🎯 Win Rate by Advisor</h2>
+    <canvas id="winRateBySourceChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>📈 Cumulative Returns %</h2>
+    <canvas id="returnsChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>⚠️ Risk Analysis</h2>
+    <canvas id="riskChart"></canvas>
+</div>
+
+
+</div>
+
+<script>
+// Get portfolio ID from URL
+const urlParams = new URLSearchParams(window.location.search);
+const portfolioId = urlParams.get('portfolio') || localStorage.getItem('current_portfolio_id') || 'dhruv';
+
+// Get portfolio name
+const portfolios = JSON.parse(localStorage.getItem('portfolios_list') || '[]');
+const currentPortfolio = portfolios.find(p => p.id === portfolioId);
+const portfolioName = currentPortfolio ? currentPortfolio.name : 'Portfolio';
+
+// Update title
+document.getElementById('portfolioTitle').textContent = `📊 ${portfolioName}'s Visual Analysis`;
+
+function  goToSecondPage() {
+    window.location.href = `2ndpage.html?portfolio=${portfolioId}`;
+}
+
+let chartInstances = [];
+
+function refreshData() {
+    location.reload();
+}
+
+function destroyAllCharts() {
+    chartInstances.forEach(chart => chart.destroy());
+    chartInstances = [];
+}
+
+// Load portfolio-specific data
+const KEY = `portfolio_data_${portfolioId}`;
+const stocks = JSON.parse(localStorage.getItem(KEY) || "[]");
+
+/* ---------- HELPERS ---------- */
+function calcPL(s) {
+    if (!s.myExitPrice || s.myExitPrice <= 0) return 0;
+    return (s.myExitPrice - s.myEntryPrice) * s.quantity;
+}
+
+function formatCurrency(value) {
+    return '₹' + value.toFixed(2);
+}
+
+/* ---------- CLOSED TRADES ---------- */
+const closed = stocks.filter(s => s.myExitPrice && s.myExitPrice > 0);
+
+// Check if there's data to display
+if (closed.length === 0) {
+    document.getElementById('noDataMessage').style.display = 'block';
+    document.getElementById('chartsGrid').style.display = 'none';
+} else {
+    
+/* ---------- SUMMARY STATS ---------- */
+const totalPL = closed.reduce((sum, s) => sum + calcPL(s), 0);
+const wins = closed.filter(s => calcPL(s) > 0);
+const losses = closed.filter(s => calcPL(s) <= 0);
+const winRate = closed.length ? ((wins.length / closed.length) * 100).toFixed(1) : 0;
+const avgWin = wins.length ? (wins.reduce((s, t) => s + calcPL(t), 0) / wins.length) : 0;
+const avgLoss = losses.length ? (losses.reduce((s, t) => s + calcPL(t), 0) / losses.length) : 0;
+const profitFactor = losses.length && avgLoss !== 0 ? Math.abs((avgWin * wins.length) / (avgLoss * losses.length)) : 0;
+
+const statsHTML = `
+    <div class="stat-item">
+        <div class="label">Total Trades</div>
+        <div class="value">${closed.length}</div>
+    </div>
+    <div class="stat-item">
+        <div class="label">Net P&L</div>
+        <div class="value ${totalPL >= 0 ? 'positive' : 'negative'}">${formatCurrency(totalPL)}</div>
+    </div>
+    <div class="stat-item">
+        <div class="label">Win Rate</div>
+        <div class="value">${winRate}%</div>
+    </div>
+    <div class="stat-item">
+        <div class="label">Profit Factor</div>
+        <div class="value ${profitFactor >= 1 ? 'positive' : 'negative'}">${profitFactor.toFixed(2)}</div>
+    </div>
+`;
+document.getElementById('statsBar').innerHTML = statsHTML;
+
+/* ---------- SORT BY DATE ---------- */
+const sortedClosed = [...closed].sort((a, b) => {
+    const dateA = new Date(a.myExitDate || a.myEntryDate);
+    const dateB = new Date(b.myExitDate || b.myEntryDate);
+    return dateA - dateB;
+});
+
+/* ---------- EQUITY + DRAWDOWN ---------- */
+let equity = [], drawdown = [];
+let running = 0, peak = 0;
+
+sortedClosed.forEach((s, i) => {
+    running += calcPL(s);
+    equity.push(running);
+    peak = Math.max(peak, running);
+    drawdown.push(peak - running);
+});
+
+chartInstances.push(new Chart(equityChart, {
+    type: 'line',
+    data: {
+        labels: equity.map((_, i) => i + 1),
+        datasets: [{
+            label: 'Cumulative P&L',
+            data: equity,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4,
+            fill: true,
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { labels: { color: '#fff' } },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) => 'P&L: ' + formatCurrency(ctx.parsed.y)
+                }
+            }
+        },
+        scales: {
+            y: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            x: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+        }
+    }
+}));
+
+chartInstances.push(new Chart(drawdownChart, {
+    type: 'line',
+    data: {
+        labels: drawdown.map((_, i) => i + 1),
+        datasets: [{
+            label: 'Drawdown',
+            data: drawdown,
+            borderColor: '#ef4444',
+            fill: true,
+            backgroundColor: 'rgba(239, 68, 68, 0.3)',
+            tension: 0.4,
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { labels: { color: '#fff' } },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) => 'Drawdown: ' + formatCurrency(ctx.parsed.y)
+                }
+            }
+        },
+        scales: {
+            y: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            x: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+        }
+    }
+}));
+
+/* ---------- ROLLING WIN RATE (10) ---------- */
+const windowSize = 10;
+let rolling = [];
+
+sortedClosed.forEach((_, i) => {
+    const slice = sortedClosed.slice(Math.max(0, i - windowSize + 1), i + 1);
+    const wins = slice.filter(s => calcPL(s) > 0).length;
+    rolling.push((wins / slice.length) * 100);
+});
+
+chartInstances.push(new Chart(rollingWinChart, {
+    type: 'line',
+    data: {
+        labels: rolling.map((_, i) => i + 1),
+        datasets: [{
+            label: 'Win Rate %',
+            data: rolling,
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            tension: 0.4,
+            fill: true,
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { labels: { color: '#fff' } }
+        },
+        scales: {
+            y: { 
+                min: 0, 
+                max: 100,
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            x: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+        }
+    }
+}));
+
+/* ---------- WIN / LOSS ---------- */
+chartInstances.push(new Chart(winLossChart, {
+    type: 'doughnut',
+    data: {
+        labels: ['Wins', 'Losses'],
+        datasets: [{
+            data: [wins.length, losses.length],
+            backgroundColor: ['#10b981', '#ef4444'],
+            borderWidth: 2,
+            borderColor: '#111827'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { 
+                labels: { color: '#fff', font: { size: 14 } },
+                position: 'bottom'
+            }
+        }
+    }
+}));
+
+/* ---------- MONTHLY ---------- */
+const monthly = {};
+sortedClosed.forEach(s => {
+    if (!s.myExitDate) return;
+    const m = s.myExitDate.slice(0, 7);
+    monthly[m] = (monthly[m] || 0) + calcPL(s);
+});
+
+const sortedMonths = Object.keys(monthly).sort();
+
+chartInstances.push(new Chart(monthlyChart, {
+    type: 'bar',
+    data: {
+        labels: sortedMonths,
+        datasets: [{
+            label: 'Monthly P&L',
+            data: sortedMonths.map(m => monthly[m]),
+            backgroundColor: sortedMonths.map(m => monthly[m] >= 0 ? '#10b981' : '#ef4444'),
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { labels: { color: '#fff' } },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) => 'P&L: ' + formatCurrency(ctx.parsed.y)
+                }
+            }
+        },
+        scales: {
+            y: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            x: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+        }
+    }
+}));
+
+/* ---------- SOURCE ---------- */
+const sourcePL = {};
+sortedClosed.forEach(s => {
+    const k = s.poweredBy || "Unknown";
+    sourcePL[k] = (sourcePL[k] || 0) + calcPL(s);
+});
+
+chartInstances.push(new Chart(sourceChart, {
+    type: 'bar',
+    data: {
+        labels: Object.keys(sourcePL),
+        datasets: [{
+            label: 'Net P&L by Advisor',
+            data: Object.values(sourcePL),
+            backgroundColor: Object.values(sourcePL).map(v => v >= 0 ? '#10b981' : '#ef4444'),
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        indexAxis: 'y',
+        plugins: {
+            legend: { labels: { color: '#fff' } },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) => 'P&L: ' + formatCurrency(ctx.parsed.x)
+                }
+            }
+        },
+        scales: {
+            x: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            y: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+        }
+    }
+}));
+
+/* ---------- DURATION ---------- */
+const durationData = [];
+sortedClosed.forEach(s => {
+    if (!s.myEntryDate || !s.myExitDate) return;
+    const days = Math.max(1, (new Date(s.myExitDate) - new Date(s.myEntryDate)) / 86400000);
+    const pl = calcPL(s);
+    durationData.push({ x: days, y: pl });
+});
+
+chartInstances.push(new Chart(durationChart, {
+    type: 'scatter',
+    data: {
+        datasets: [{
+            label: 'Trade Duration vs P&L',
+            data: durationData,
+            backgroundColor: durationData.map(d => d.y >= 0 ? '#10b981' : '#ef4444'),
+            borderColor: '#fff',
+            borderWidth: 1,
+            pointRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { labels: { color: '#fff' } },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) => `Days: ${ctx.parsed.x.toFixed(0)}, P&L: ${formatCurrency(ctx.parsed.y)}`
+                }
+            }
+        },
+        scales: {
+            x: { 
+                title: { display: true, text: 'Days Held', color: '#fff' },
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            y: { 
+                title: { display: true, text: 'P&L', color: '#fff' },
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+        }
+    }
+}));
+// const durationBuckets = {
+//     '1 day': [],
+//     '2–5 days': [],
+//     '6–10 days': [],
+//     '11–20 days': [],
+//     '21–50 days': [],
+//     '51-100 days': [],
+//     '100+ days': []
+// };
+
+// sortedClosed.forEach(s => {
+//     if (!s.myEntryDate || !s.myExitDate) return;
+
+//     const days = Math.max(
+//         1,
+//         (new Date(s.myExitDate) - new Date(s.myEntryDate)) / 86400000
+//     );
+
+//     const pl = calcPL(s);
+
+//     if (days === 1) durationBuckets['1 day'].push(pl);
+//     else if (days <= 5) durationBuckets['2–5 days'].push(pl);
+//     else if (days <= 10) durationBuckets['6–10 days'].push(pl);
+//     else if (days <= 20) durationBuckets['11–20 days'].push(pl);
+//     else if (days <= 50) durationBuckets['21–50 days'].push(pl);
+//     else if (days <= 100) durationBuckets['51–100 days'].push(pl);
+//     else durationBuckets['100+ days'].push(pl);
+// });
+
+// const durationLabels = Object.keys(durationBuckets);
+// const avgPLByDuration = durationLabels.map(label => {
+//     const values = durationBuckets[label];
+//     return values.length
+//         ? values.reduce((a, b) => a + b, 0) / values.length
+//         : 0;
+// });
+
+// chartInstances.push(new Chart(durationChart, {
+//     type: 'bar',
+//     data: {
+//         labels: durationLabels,
+//         datasets: [{
+//             label: 'Average P&L by Trade Duration',
+//             data: avgPLByDuration,
+//             backgroundColor: avgPLByDuration.map(v => v >= 0 ? '#10b981' : '#ef4444'),
+//             borderWidth: 0
+//         }]
+//     },
+//     options: {
+//         responsive: true,
+//         maintainAspectRatio: true,
+//         plugins: {
+//             legend: { labels: { color: '#fff' } },
+//             tooltip: {
+//                 callbacks: {
+//                     label: ctx => `Avg P&L: ${formatCurrency(ctx.parsed.y)}`
+//                 }
+//             }
+//         },
+//         scales: {
+//             x: {
+//                 title: { display: true, text: 'Trade Duration', color: '#fff' },
+//                 ticks: { color: '#fff' },
+//                 grid: { color: 'rgba(255,255,255,0.1)' }
+//             },
+//             y: {
+//                 title: { display: true, text: 'Average P&L', color: '#fff' },
+//                 ticks: { color: '#fff' },
+//                 grid: { color: 'rgba(255,255,255,0.1)' }
+//             }
+//         }
+//     }
+// }));
+
+
+// /* ---------- ALLOCATION ---------- */
+const allocation = {};
+
+stocks.forEach(s => {
+    // Only ACTIVE positions (no exit)
+    if (s.myExitDate || s.myExitPrice) return;
+
+    const name = s.stockName || "Unknown";
+    allocation[name] = (allocation[name] || 0) + (s.quantity * s.myEntryPrice);
+});
+
+if (Object.keys(allocation).length > 0) {
+    chartInstances.push(new Chart(allocationChart, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(allocation),
+            datasets: [{
+                data: Object.values(allocation),
+                backgroundColor: [
+                    '#10b981', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6',
+                    '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16'
+                ],
+                borderWidth: 2,
+                borderColor: '#111827'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { 
+                    labels: { color: '#fff', font: { size: 12 } },
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => ctx.label + ': ' + formatCurrency(ctx.parsed)
+                    }
+                }
+            }
+        }
+    }));
+} else {
+    document.querySelector('#allocationChart').parentElement.innerHTML = 
+        '<h2>💼 Current Capital Allocation</h2><p style="text-align:center;padding:50px;opacity:0.6">No active positions</p>';
+}
+
+/* ---------- PROFIT DISTRIBUTION ---------- */
+const plValues = sortedClosed.map(s => calcPL(s));
+const bins = [-Infinity, -5000, -2000, -1000, 0, 1000, 2000, 5000, Infinity];
+const binLabels = ['< -5k', '-5k to -2k', '-2k to -1k', '-1k to 0', '0 to 1k', '1k to 2k', '2k to 5k', '> 5k'];
+const distribution = new Array(binLabels.length).fill(0);
+
+plValues.forEach(pl => {
+    for (let i = 0; i < bins.length - 1; i++) {
+        if (pl >= bins[i] && pl < bins[i + 1]) {
+            distribution[i]++;
+            break;
+        }
+    }
+});
+
+chartInstances.push(new Chart(profitDistChart, {
+    type: 'bar',
+    data: {
+        labels: binLabels,
+        datasets: [{
+            label: 'Trade Count',
+            data: distribution,
+            backgroundColor: '#6366f1',
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { labels: { color: '#fff' } }
+        },
+        scales: {
+            y: { 
+                ticks: { color: '#fff', stepSize: 1 },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            x: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+        }
+    }
+}));
+
+/* ---------- WIN RATE BY SOURCE ---------- */
+const sourceWinRate = {};
+const sourceTrades = {};
+
+sortedClosed.forEach(s => {
+    const source = s.poweredBy || "Unknown";
+    if (!sourceTrades[source]) {
+        sourceTrades[source] = { wins: 0, total: 0 };
+    }
+    sourceTrades[source].total++;
+    if (calcPL(s) > 0) {
+        sourceTrades[source].wins++;
+    }
+});
+
+Object.keys(sourceTrades).forEach(source => {
+    sourceWinRate[source] = (sourceTrades[source].wins / sourceTrades[source].total) * 100;
+});
+
+chartInstances.push(new Chart(winRateBySourceChart, {
+    type: 'bar',
+    data: {
+        labels: Object.keys(sourceWinRate),
+        datasets: [{
+            label: 'Win Rate %',
+            data: Object.values(sourceWinRate),
+            backgroundColor: '#22c55e',
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { labels: { color: '#fff' } }
+        },
+        scales: {
+            y: { 
+                min: 0,
+                max: 100,
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            x: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+        }
+    }
+}));
+
+/* ---------- CUMULATIVE RETURNS % ---------- */
+let initialCapital = 100000; // Assume starting capital
+let returnsData = [];
+let capital = initialCapital;
+
+sortedClosed.forEach((s, i) => {
+    capital += calcPL(s);
+    const returnPct = ((capital - initialCapital) / initialCapital) * 100;
+    returnsData.push(returnPct);
+});
+
+chartInstances.push(new Chart(returnsChart, {
+    type: 'line',
+    data: {
+        labels: returnsData.map((_, i) => i + 1),
+        datasets: [{
+            label: 'Cumulative Returns %',
+            data: returnsData,
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+            tension: 0.4,
+            fill: true,
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { labels: { color: '#fff' } },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) => 'Return: ' + ctx.parsed.y.toFixed(2) + '%'
+                }
+            }
+        },
+        scales: {
+            y: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            x: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+        }
+    }
+}));
+
+/* ---------- RISK ANALYSIS ---------- */
+const riskMetrics = {
+    'Avg Win': avgWin,
+    'Avg Loss': Math.abs(avgLoss),
+    'Max Win': Math.max(...plValues),
+    'Max Loss': Math.abs(Math.min(...plValues)),
+    'Sharpe Approx': plValues.length > 1 ? 
+        (plValues.reduce((a, b) => a + b, 0) / plValues.length) / 
+        Math.sqrt(plValues.reduce((sum, val) => sum + Math.pow(val - (plValues.reduce((a, b) => a + b, 0) / plValues.length), 2), 0) / plValues.length) 
+        : 0
+};
+
+chartInstances.push(new Chart(riskChart, {
+    type: 'bar',
+    data: {
+        labels: Object.keys(riskMetrics),
+        datasets: [{
+            label: 'Risk Metrics',
+            data: Object.values(riskMetrics),
+            backgroundColor: ['#10b981', '#ef4444', '#22c55e', '#f87171', '#6366f1'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { labels: { color: '#fff' } },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) => ctx.label + ': ' + (ctx.label.includes('Loss') || ctx.label.includes('Win') ? formatCurrency(ctx.parsed.y) : ctx.parsed.y.toFixed(2))
+                }
+            }
+        },
+        scales: {
+            y: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            x: { 
+                ticks: { color: '#fff' },
+                grid: { color: 'rgba(255,255,255,0.1)' }
+            }
+        }
+    }
+}));
+
+}
+</script>
+
+</body>
+</html>

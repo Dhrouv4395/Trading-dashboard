@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stock Portfolio Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+    font-family:'Segoe UI',sans-serif;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    padding:20px;
+    min-height:100vh;
+}
+.container{max-width:95%;margin:auto}
+.card{
+    background:#fff;
+    border-radius:15px;
+    padding:25px;
+    margin-bottom:25px;
+    box-shadow:0 4px 6px rgba(0,0,0,0.1);
+}
+.portfolio-name-header{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    margin-bottom:10px;
+}
+.portfolio-name-header h1{
+    font-size:2.5em;
+}
+.home-btn{
+    background:#6366f1;
+    color:#fff;
+    border:none;
+    padding:10px 20px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+    text-decoration:none;
+    display:inline-block;
+    transition:all 0.2s;
+}
+.home-btn:hover{
+    background:#4f46e5;
+    transform:translateY(-2px);
+}
+.summary-cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+    margin-top:20px;
+}
+.summary-card{
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 4px 6px rgba(0,0,0,0.2);
+}
+.summary-card h3{
+    font-size:14px;
+    margin-bottom:8px;
+    opacity:0.9;
+}
+.summary-card p{
+    font-size:24px;
+    font-weight:700;
+}
+.controls{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+}
+.add-btn{
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:#fff;
+    border:none;
+    padding:12px 24px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+    transition:transform 0.2s;
+}
+.add-btn:hover{
+    transform:translateY(-2px);
+}
+.table-wrapper{
+    overflow-x:auto;
+    margin-top:10px;
+}
+table{
+    border-collapse:collapse;
+    min-width:2600px;
+    width:max-content;
+}
+thead{
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:#fff;
+}
+th{
+    padding:12px;
+    white-space:nowrap;
+    cursor:pointer;
+    user-select:none;
+}
+th:hover{
+    background:rgba(255,255,255,0.1);
+}
+td{
+    padding:12px;
+    white-space:nowrap;
+    border-bottom:1px solid #e5e7eb;
+}
+td input,
+td select{
+    width:100%;
+    padding:6px;
+    border:1px solid #ccc;
+    border-radius:4px;
+    font-size:14px;
+}
+td input[type="number"]{
+    min-width:100px;
+}
+td input[type="date"]{
+    min-width:140px;
+}
+.positive{color:#10b981;font-weight:700}
+.negative{color:#ef4444;font-weight:700}
+.action-btn{
+    background:#ef4444;
+    color:#fff;
+    border:none;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:background 0.2s;
+}
+.action-btn:hover{
+    background:#dc2626;
+}
+
+/* Dark Mode */
+body.dark{
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+}
+body.dark .card{
+    background:#1f2937;
+    color:#e5e7eb;
+}
+body.dark table{
+    color:#e5e7eb;
+}
+body.dark thead{
+    background:linear-gradient(135deg,#1e293b,#334155);
+}
+body.dark td{
+    border-bottom:1px solid #374151;
+}
+body.dark input,
+body.dark select{
+    background:#111827;
+    color:#e5e7eb;
+    border:1px solid #374151;
+}
+body.dark .summary-card{
+    background:linear-gradient(135deg,#1e293b,#334155);
+}
+/* Table container scrolls */
+.table-scroll {
+    max-height: calc(100vh - 300px); /* screen height minus header */
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+/* Freeze table header */
+.table-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: linear-gradient(135deg,#667eea);
+}
+
+/* Dark mode header fix */
+body.dark .table-scroll thead th {
+    background: linear-gradient(135deg,#334155);
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<div class="card">
+<div class="portfolio-name-header">
+    <a href="index.html" class="home-btn">🏠 Home</a>
+    <h1 id="portfolioNameDisplay">📊 Stock Portfolio Dashboard</h1>
+</div>
+<div class="summary-cards">
+<div class="summary-card">
+    <h3>Total Invested</h3>
+    <p id="totalInvested">₹0.00</p>
+</div>
+<div class="summary-card">
+    <h3>Total P&L (Advisor)</h3>
+    <p id="total_PL">₹0.00</p>
+</div>
+<div class="summary-card">
+    <h3>My Total P&L</h3>
+    <p id="myTotal_PL">₹0.00</p>
+</div>
+<div class="summary-card">
+    <h3>Active Positions</h3>
+    <p id="activePositions">0</p>
+</div>
+<div class="summary-card">
+    <h3>Win Rate</h3>
+    <p id="winRate">0%</p>
+</div>
+</div>
+</div>
+
+<!-- CONTROLS -->
+<div class="card controls">
+<button class="add-btn" onclick="addStock()">+ Add Stock</button>
+<button class="add-btn" onclick="exportJSON()">⬇ Export JSON</button>
+<label class="add-btn" style="cursor:pointer">
+⬆ Import JSON
+<input type="file" hidden accept=".json" onchange="importJSON(event)">
+</label>
+<button class="add-btn" onclick="goToCharts()">📈 View Visual Analysis</button>
+<button class="add-btn" onclick="toggleDark()">🌙 Toggle Dark Mode</button>
+</div>
+
+<!-- TABLE -->
+<div class="card">
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th onclick="sortBy('stockName')">Stock ⬍</th>
+<th onclick="sortBy('poweredBy')">Powered By ⬍</th>
+<th onclick="sortBy('quantity')">Qty ⬍</th>
+<th onclick="sortBy('buySell')">Buy/Sell ⬍</th>
+<th onclick="sortBy('openClosed')">Open/Closed ⬍</th>
+<th>Entry Price</th>
+<th>Exit Price</th>
+<th onclick="sortBy('entryDate')">Entry Date ⬍</th>
+<th onclick="sortBy('exitDate')">Exit Date ⬍</th>
+<th onclick="sortBy('duration')">Duration ⬍</th>
+<th>My Entry Price</th>
+<th>My Exit Price</th>
+<th onclick="sortBy('myEntryDate')">My Entry Date ⬍</th>
+<th onclick="sortBy('myExitDate')">My Exit Date ⬍</th>
+<th onclick="sortBy('myduration')">My Duration ⬍</th>
+<th onclick="sortBy('invested')">Invested ⬍</th>
+<th>Target</th>
+<th>Stop Loss</th>
+<th onclick="sortBy('pl')">P&L (Advisor) ⬍</th>
+<th onclick="sortBy('mypl')">My P&L ⬍</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+<script>
+// Get portfolio ID from URL
+const urlParams = new URLSearchParams(window.location.search);
+const portfolioId = urlParams.get('portfolio') || localStorage.getItem('current_portfolio_id') || 'dhruv';
+
+// Get portfolio name
+const portfolios = JSON.parse(localStorage.getItem('portfolios_list') || '[]');
+const currentPortfolio = portfolios.find(p => p.id === portfolioId);
+const portfolioName = currentPortfolio ? currentPortfolio.name : 'Portfolio';
+
+// Update header
+document.getElementById('portfolioNameDisplay').textContent = `📊 ${portfolioName}'s Portfolio`;
+
+// Use portfolio-specific key
+const KEY = `portfolio_data_${portfolioId}`;
+let stocks = JSON.parse(localStorage.getItem(KEY) || "[]");
+
+function save() {
+    localStorage.setItem(KEY, JSON.stringify(stocks));
+}
+
+function daysBetween(start, end) {
+    if (!start) return 0;
+    const s = new Date(start);
+    const e = end ? new Date(end) : new Date();
+    return Math.max(0, Math.floor((e - s) / 86400000));
+}
+
+function goToCharts() {
+    window.location.href = `visualizations.html?portfolio=${portfolioId}`;
+}
+
+function normalize(s) {
+    return {
+        id: s.id || Date.now() + Math.random(),
+        stockName: s.stockName || "",
+        poweredBy: s.poweredBy || "",
+        quantity: Number(s.quantity) || 0,
+        buySell: s.buySell || "",
+        openClosed: s.openClosed || "",
+        entryPrice: Number(s.entryPrice) || 0,
+        exitPrice: Number(s.exitPrice) || 0,
+        entryDate: s.entryDate || "",
+        exitDate: s.exitDate || "",
+        myEntryPrice: Number(s.myEntryPrice) || 0,
+        myExitPrice: Number(s.myExitPrice) || 0,
+        myEntryDate: s.myEntryDate || "",
+        myExitDate: s.myExitDate || "",
+        targetPrice: Number(s.targetPrice) || 0,
+        stopLoss: Number(s.stopLoss) || 0
+    };
+}
+
+function addStock() {
+    stocks.unshift(normalize({}));
+    save();
+    render();
+}
+
+function update(id, field, val) {
+    const s = stocks.find(x => x.id === id);
+    if (s) {
+        s[field] = val;
+        save();
+        render();
+    }
+}
+
+function del(id) {
+    if (!confirm("Delete this stock entry?")) return;
+    stocks = stocks.filter(s => s.id !== id);
+    save();
+    render();
+}
+
+function toggleDark() {
+    document.body.classList.toggle("dark");
+    localStorage.setItem("darkMode", document.body.classList.contains("dark"));
+}
+
+// Initialize dark mode
+if (localStorage.getItem("darkMode") === "true") {
+    document.body.classList.add("dark");
+}
+
+let sortState = { key: null, asc: true };
+
+function sortBy(key) {
+    if (sortState.key === key) {
+        sortState.asc = !sortState.asc;
+    } else {
+        sortState = { key, asc: true };
+    }
+
+    stocks.sort((a, b) => {
+        let x, y;
+
+        switch (key) {
+            case "invested":
+                x = a.quantity * a.myEntryPrice;
+                y = b.quantity * b.myEntryPrice;
+                break;
+            case "pl":
+                x = (a.exitPrice - a.entryPrice) * a.quantity || 0;
+                y = (b.exitPrice - b.entryPrice) * b.quantity || 0;
+                break;
+            case "mypl":
+                x = (a.myExitPrice - a.myEntryPrice) * a.quantity || 0;
+                y = (b.myExitPrice - b.myEntryPrice) * b.quantity || 0;
+                break;
+            case "duration":
+                x = daysBetween(a.entryDate, a.exitDate);
+                y = daysBetween(b.entryDate, b.exitDate);
+                break;
+            case "myduration":
+                x = daysBetween(a.myEntryDate, a.myExitDate);
+                y = daysBetween(b.myEntryDate, b.myExitDate);
+                break;
+            default:
+                x = a[key] || "";
+                y = b[key] || "";
+        }
+
+        if (typeof x === "string") {
+            return sortState.asc ? x.localeCompare(y) : y.localeCompare(x);
+        }
+
+        return sortState.asc ? x - y : y - x;
+    });
+
+    render();
+}
+
+function render() {
+    const tbody = document.getElementById('tbody');
+    
+    if (!stocks.length) {
+        tbody.innerHTML = `<tr><td colspan="20" style="padding:40px;text-align:center;color:#999">
+        No stocks added yet. Click "+ Add Stock" to get started.</td></tr>`;
+        updateSummary();
+        return;
+    }
+
+    tbody.innerHTML = stocks.map(s => {
+        const invested = s.quantity * s.myEntryPrice;
+        
+        // Advisor P&L calculation
+        const advisorPL = (s.exitPrice - s.entryPrice) * s.quantity || 0;
+        
+        // My P&L calculation
+        const myPL = (s.myExitPrice - s.myEntryPrice) * s.quantity || 0;
+
+        return `<tr>
+<td><input value="${s.stockName}" onchange="update(${s.id},'stockName',this.value)"></td>
+<td>
+  <select onchange="update(${s.id},'poweredBy',this.value)">
+    <option value="">Select</option>
+    <option value="Lotus Funds" ${s.poweredBy === "Lotus Funds" ? "selected" : ""}>Lotus Funds</option>
+    <option value="Manish Shah" ${s.poweredBy === "Manish Shah" ? "selected" : ""}>Manish Shah</option>
+    <option value="Kavan Patel" ${s.poweredBy === "Kavan Patel" ? "selected" : ""}>Kavan Patel</option>
+    <option value="Kush Bohra" ${s.poweredBy === "Kush Bohra" ? "selected" : ""}>Kush Bohra</option>
+    <option value="Dhawani Patel" ${s.poweredBy === "Dhawani Patel" ? "selected" : ""}>Dhawani Patel</option>
+    <option value="Clovek Wealth" ${s.poweredBy === "Clovek Wealth" ? "selected" : ""}>Clovek Wealth</option>
+  </select>
+</td>
+<td><input type="number" value="${s.quantity}" onchange="update(${s.id},'quantity',+this.value)"></td>
+<td>
+  <select onchange="update(${s.id},'buySell',this.value)">
+    <option value="">Select</option>
+    <option value="Buy" ${s.buySell === "Buy" ? "selected" : ""}>Buy</option>
+    <option value="Sell" ${s.buySell === "Sell" ? "selected" : ""}>Sell</option>
+  </select>
+</td>
+<td>
+  <select onchange="update(${s.id},'openClosed',this.value)">
+    <option value="">Select</option>
+    <option value="Open" ${s.openClosed === "Open" ? "selected" : ""}>Open</option>
+    <option value="Closed" ${s.openClosed === "Closed" ? "selected" : ""}>Closed</option>
+  </select>
+</td>
+<td><input type="number" step="any" value="${s.entryPrice}" onchange="update(${s.id},'entryPrice',+this.value)"></td>
+<td><input type="number" step="any" value="${s.exitPrice}" onchange="update(${s.id},'exitPrice',+this.value)"></td>
+<td><input type="date" value="${s.entryDate}" onchange="update(${s.id},'entryDate',this.value)"></td>
+<td><input type="date" value="${s.exitDate}" onchange="update(${s.id},'exitDate',this.value)"></td>
+<td>${daysBetween(s.entryDate, s.exitDate)} days</td>
+<td><input type="number" step="any" value="${s.myEntryPrice}" onchange="update(${s.id},'myEntryPrice',+this.value)"></td>
+<td><input type="number" step="any" value="${s.myExitPrice}" onchange="update(${s.id},'myExitPrice',+this.value)"></td>
+<td><input type="date" value="${s.myEntryDate}" onchange="update(${s.id},'myEntryDate',this.value)"></td>
+<td><input type="date" value="${s.myExitDate}" onchange="update(${s.id},'myExitDate',this.value)"></td>
+<td>${daysBetween(s.myEntryDate, s.myExitDate)} days</td>
+<td>₹${invested.toFixed(2)}</td>
+<td><input type="number" step="any" value="${s.targetPrice}" onchange="update(${s.id},'targetPrice',+this.value)"></td>
+<td><input type="number" step="any" value="${s.stopLoss}" onchange="update(${s.id},'stopLoss',+this.value)"></td>
+<td class="${advisorPL >= 0 ? 'positive' : 'negative'}">₹${advisorPL.toFixed(2)}</td>
+<td class="${myPL >= 0 ? 'positive' : 'negative'}">₹${myPL.toFixed(2)}</td>
+<td><button class="action-btn" onclick="del(${s.id})">Delete</button></td>
+</tr>`;
+    }).join("");
+
+    updateSummary();
+}
+
+function updateSummary() {
+    // ACTIVE = no exit at all
+    const activeStocks = stocks.filter(s => !s.myExitPrice);
+
+    // TOTAL INVESTED (only active, using my entry)
+    const invested = activeStocks.reduce((a, s) => a + s.quantity * s.myEntryPrice, 0);
+
+    // TOTAL P&L (ADVISOR - based on their entry/exit)
+    const totalPL = stocks.reduce((a, s) => {
+        if (!s.exitPrice || s.exitPrice <= 0) return a;
+        return a + (s.exitPrice - s.entryPrice) * s.quantity;
+    }, 0);
+
+    // TOTAL P&L (MY ACTUAL - based on my entry/exit)
+    const myTotalPL = stocks.reduce((a, s) => {
+        if (!s.myExitPrice || s.myExitPrice <= 0) return a;
+        return a + (s.myExitPrice - s.myEntryPrice) * s.quantity;
+    }, 0);
+
+    // WIN RATE (based on MY trades)
+    const closed = stocks.filter(s => s.myExitPrice > 0);
+    const wins = closed.filter(s => s.myExitPrice > s.myEntryPrice);
+
+    document.getElementById('totalInvested').textContent = `₹${invested.toFixed(2)}`;
+    document.getElementById('total_PL').textContent = `₹${totalPL.toFixed(2)}`;
+    document.getElementById('myTotal_PL').textContent = `₹${myTotalPL.toFixed(2)}`;
+
+    document.getElementById('total_PL').style.color = totalPL >= 0 ? '#10b981' : '#ef4444';
+    document.getElementById('myTotal_PL').style.color = myTotalPL >= 0 ? '#10b981' : '#ef4444';
+
+    document.getElementById('activePositions').textContent = activeStocks.length;
+    document.getElementById('winRate').textContent = closed.length
+        ? ((wins.length / closed.length) * 100).toFixed(1) + "%"
+        : "0%";
+}
+
+function exportJSON() {
+    const blob = new Blob([JSON.stringify(stocks, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${portfolioName}_stocks_` + new Date().toISOString().split('T')[0] + ".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+function importJSON(e) {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+        try {
+            let d = JSON.parse(r.result);
+            if (d.stocks) d = d.stocks;
+            stocks = d.map(normalize);
+            save();
+            render();
+            alert("Import successful! " + stocks.length + " entries loaded.");
+        } catch (err) {
+            alert("Error importing file: " + err.message);
+        }
+    };
+    r.readAsText(f);
+}
+
+// Initial render
+render();
+</script>
+</body>
+</html>
